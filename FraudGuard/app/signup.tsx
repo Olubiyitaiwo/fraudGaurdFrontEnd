@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -46,6 +46,7 @@ export default function Signup() {
   };
 
   return (
+    <Link href="/dashboard" asChild>
     <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
       <TextInput
@@ -72,6 +73,7 @@ export default function Signup() {
       />
       <Button title="Sign Up" onPress={handleSignup} />
     </View>
+    </Link>
   );
 }
 
