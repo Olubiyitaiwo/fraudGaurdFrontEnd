@@ -13,17 +13,29 @@ export default function WelcomeScreen() {
 
       <Text style={styles.title}>FraudGuard</Text>
 
-      <Link href="/login" asChild>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-      </Link>
+      <Text style={styles.subtitle}>Your smart alert companion.</Text>
+      <Text style={styles.subtitle}>
+        Stay ahead of fraud with real-time transaction monitoring,
+      </Text>
+      <Text style={styles.subtitle}>
+        instant alerts, and quick response tools — whether you're at the terminal or on the go.
+      </Text>
 
-      <Link href="/signup" asChild>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
-      </Link>
+      <Text style={styles.getStarted}>Get Started</Text>
+
+      <View style={styles.buttonRow}>
+        <Link href="/signup" asChild>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>POS Agent</Text>
+          </TouchableOpacity>
+        </Link>
+
+        <Link href="/signup" asChild>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Regular User</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -40,18 +52,36 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#fff',
     marginVertical: 20,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  getStarted: {
+    fontSize: 18,
+    color: '#fff',
+    marginVertical: 20,
+    fontWeight: '600',
   },
   reactLogo: {
     width: 200,
     height: 200,
     resizeMode: 'contain',
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
   },
   button: {
     backgroundColor: '#fff',
     paddingVertical: 12,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 10,
+    marginHorizontal: 5,
   },
   buttonText: {
     color: '#110BBD',
