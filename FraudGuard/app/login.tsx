@@ -24,7 +24,10 @@ export default function Login() {
     if (!validate()) return;
 
     try {
-      const response = await axios.post('https://your-api.com/api/login', {
+      const response = await axios.post('http://localhost:8080/api/auth/login', {
+        //POST http://localhost:8080/api/auth/register
+        //POST http://localhost:8080/api/auth/login
+
         email,
         password,
       });
