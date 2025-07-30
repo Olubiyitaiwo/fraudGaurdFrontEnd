@@ -9,11 +9,22 @@ import {
   ScrollView,
 } from 'react-native';
 
-const ActivityCard = ({ image, label }: { image: any; label: string }) => (
+const ActivityCard = ({
+  image,
+  label,
+  time,
+}: {
+  image: any;
+  label: string;
+  time?: string;
+}) => (
   <View style={styles.activityCard}>
     <TouchableOpacity style={styles.activityItem}>
       <Image source={image} style={styles.activityImage} />
-      <Text style={styles.activityText}>{label}</Text>
+      <View>
+        <Text style={styles.activityText}>{label}</Text>
+        {time && <Text style={styles.activityTime}>{time}</Text>}
+      </View>
     </TouchableOpacity>
   </View>
 );
@@ -21,6 +32,11 @@ const ActivityCard = ({ image, label }: { image: any; label: string }) => (
 export default function Dashboard(): React.JSX.Element {
   const [isProtected, setIsProtected] = useState(false);
   const toggleProtection = () => setIsProtected((prev) => !prev);
+
+  const [transactionTime, setTransactionTime] = useState<string>('07:45 AM');
+  const [flaggedTime, setFlaggedTime] = useState<string>('08:23 AM');
+  const [approvedTime, setApprovedTime] = useState<string>('09:15 AM');
+  const [deniedTime, setDeniedTime] = useState<string>('10:05 AM');
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -38,9 +54,11 @@ export default function Dashboard(): React.JSX.Element {
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Transaction Today</Text>
+          <Text style={styles.timeStamp}>{transactionTime}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Flagged Transactions</Text>
+          <Text style={styles.timeStamp}>{flaggedTime}</Text>
         </TouchableOpacity>
       </View>
 
@@ -54,10 +72,12 @@ export default function Dashboard(): React.JSX.Element {
         <ActivityCard
           image={require('../assets/images/correct-image.avif')}
           label="Transaction Approved"
+          time={approvedTime}
         />
         <ActivityCard
           image={require('../assets/images/wrong-image.png')}
           label="Transaction Denied"
+          time={deniedTime}
         />
       </View>
     </ScrollView>
@@ -138,5 +158,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  timeStamp: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  activityTime: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 2,
   },
 });
