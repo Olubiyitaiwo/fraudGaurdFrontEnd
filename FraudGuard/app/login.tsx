@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Text, Alert, Platform } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+
+const LOGIN_API_URL = 'http://172.16.0.167:8080/api/auth/login';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,13 +12,15 @@ export default function Login() {
 
   const validate = (): boolean => {
     if (!email.includes('@')) {
-      Alert.alert('Invalid email');
+      Alert.alert('Invalid email address');
       return false;
     }
+
     if (password.length < 6) {
       Alert.alert('Password must be at least 6 characters');
       return false;
     }
+
     return true;
   };
 
@@ -24,27 +28,35 @@ export default function Login() {
     if (!validate()) return;
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
-        //POST http://localhost:8080/api/auth/register
-        //POST http://localhost:8080/api/auth/login
-
-        email,
-        password,
+      const response = await axios.post(LOGIN_API_URL, {
+        email: email.trim(),
+        password: password.trim(),
       });
 
       if (response.status === 200) {
-        router.replace('/'); // Navigate to Home
+        Alert.alert('Login successful', 'Welcome back!');
+        router.replace('/dashboard'); // Or your desired screen
       } else {
         Alert.alert('Login failed', response.data.message || 'Unknown error');
       }
     } catch (error: any) {
-      Alert.alert('Login error', error.response?.data?.message || error.message);
+      console.log('Login error:', error);
+      if (axios.isAxiosError(error)) {
+        const msg =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          'Server error occurred.';
+        Alert.alert('Login Failed', msg);
+      } else {
+        Alert.alert('Unexpected Error', error.message || 'Something went wrong.');
+      }
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+
       <TextInput
         placeholder="Email"
         value={email}
@@ -53,6 +65,7 @@ export default function Login() {
         autoCapitalize="none"
         style={styles.input}
       />
+
       <TextInput
         placeholder="Password"
         value={password}
@@ -60,6 +73,7 @@ export default function Login() {
         secureTextEntry
         style={styles.input}
       />
+
       <Button title="Login" onPress={handleLogin} />
     </View>
   );
@@ -68,21 +82,26 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#007bff',
+    backgroundColor: '#C8C7D0',
     justifyContent: 'center',
     padding: 20,
-  },
-  input: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
   },
   title: {
     fontSize: 28,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+      },
+    }),
   },
 });
 
