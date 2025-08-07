@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,53 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
-const ActivityCard = ({
-  image,
-  label,
-  time,
-}: {
-  image: any;
-  label: string;
-  time?: string;
-}) => (
+// Backend API endpoint
+const API_NOTIFICATION_STATS = 'http://172.16.0.167:8080/api/notifications/stats';
+//  const router = useRouter();
+
+// Enum-level badge mapping
+const RISK_MAP = {
+  FRAUD: {
+    label: 'Fraud',
+    icon: '👿',
+    color: '#f44336',
+  },
+  WARNING: {
+    label: 'Warning',
+    icon: '⚠️',
+    color: '#ff9800',
+  },
+  SAFE: {
+    label: 'Safe',
+    icon: '✅',
+    color: '#4caf50',
+  },
+};
+
+type RiskLevel = keyof typeof RISK_MAP;
+
+type NotificationStats = {
+  [key in RiskLevel]: number;
+};
+
+// Badge component
+const RiskBadge = ({ level, count }: { level: RiskLevel; count: number }) => {
+  const { icon, label, color } = RISK_MAP[level];
+  return (
+    <View style={[styles.riskBadge, { backgroundColor: color }]}>
+      <Text style={styles.riskIcon}>{icon}</Text>
+      <Text style={styles.riskLabel}>{label}: {count}</Text>
+    </View>
+  );
+};
+
+// Recent activity card
+const ActivityCard = ({ image, label, time }: { image: any; label: string; time?: string }) => (
   <View style={styles.activityCard}>
     <TouchableOpacity style={styles.activityItem}>
       <Image source={image} style={styles.activityImage} />
@@ -29,17 +65,37 @@ const ActivityCard = ({
   </View>
 );
 
-export default function Dashboard(): React.JSX.Element {
+export default function Dashboard() {
   const [isProtected, setIsProtected] = useState(false);
+  const [notificationStats, setNotificationStats] = useState<NotificationStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const router = useRouter();
+
   const toggleProtection = () => setIsProtected((prev) => !prev);
 
-  const [transactionTime, setTransactionTime] = useState<string>('07:45 AM');
-  const [flaggedTime, setFlaggedTime] = useState<string>('08:23 AM');
-  const [approvedTime, setApprovedTime] = useState<string>('09:15 AM');
-  const [deniedTime, setDeniedTime] = useState<string>('10:05 AM');
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await axios.get(API_NOTIFICATION_STATS);
+        setNotificationStats(response.data);
+      } catch (err) {
+        console.warn('Failed to fetch stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Go Back Button */}
+        <TouchableOpacity onPress={() => router.push('/login')} style={styles.backButton}>
+            <Text style={styles.backText}>🔙 Go Back</Text>
+        </TouchableOpacity>
+
+      {/* Protection Switch */}
       <View style={styles.buttonStatus}>
         <Text style={styles.label}>Protection Status</Text>
         <Switch
@@ -51,20 +107,26 @@ export default function Dashboard(): React.JSX.Element {
         <Text style={styles.status}>{isProtected ? 'Enabled' : 'Disabled'}</Text>
       </View>
 
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Transaction Today</Text>
-          <Text style={styles.timeStamp}>{transactionTime}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Flagged Transactions</Text>
-          <Text style={styles.timeStamp}>{flaggedTime}</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Notification Summary */}
+      <Text style={styles.sectionTitle}>Daily Notification Summary</Text>
+      {loadingStats ? (
+        <ActivityIndicator size="large" color="#007bff" />
+      ) : (
+        <View style={styles.riskRow}>
+          <RiskBadge level="FRAUD" count={notificationStats?.FRAUD ?? 0} />
+          <RiskBadge level="WARNING" count={notificationStats?.WARNING ?? 0} />
+          <RiskBadge level="SAFE" count={notificationStats?.SAFE ?? 0} />
+        </View>
+      )}
 
+      {/* Navigate to Summary
+      <TouchableOpacity style={styles.summaryButton} onPress={() => router.push('/summary')}>
+        <Text style={styles.summaryButtonText}>View Notification Summary</Text>
+      </TouchableOpacity> */}
+
+      {/* Recent Activities */}
       <View style={styles.activitiesSection}>
         <Text style={styles.text}>Recent Activities</Text>
-
         <ActivityCard
           image={require('../assets/images/guard-image.png')}
           label="Suspicious Transactions"
@@ -72,13 +134,17 @@ export default function Dashboard(): React.JSX.Element {
         <ActivityCard
           image={require('../assets/images/correct-image.avif')}
           label="Transaction Approved"
-          time={approvedTime}
+          time="09:15 AM"
         />
         <ActivityCard
           image={require('../assets/images/wrong-image.png')}
           label="Transaction Denied"
-          time={deniedTime}
+          time="10:05 AM"
         />
+        {/* Navigate to Summary */}
+      <TouchableOpacity style={styles.summaryButton} onPress={() => router.push('/summary')}>
+        <Text style={styles.summaryButtonText}>View Notification Summary</Text>
+      </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -100,21 +166,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: '#555',
   },
-  buttonRow: {
-    flexDirection: 'row',
-    marginTop: 20,
-  },
-  button: {
-    backgroundColor: '#00C851',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 6,
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   buttonStatus: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -123,15 +174,56 @@ const styles = StyleSheet.create({
     width: '90%',
     alignItems: 'center',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  riskRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '90%',
+    marginBottom: 20,
+  },
+  riskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+  },
+  riskIcon: {
+    fontSize: 20,
+    marginRight: 8,
+    color: '#fff',
+  },
+  riskLabel: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  summaryButton: {
+    backgroundColor: '#110BBD',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  summaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  activitiesSection: {
+    marginTop: 30,
+    width: '90%',
+  },
   text: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 10,
     color: '#333',
-  },
-  activitiesSection: {
-    marginTop: 30,
-    width: '90%',
   },
   activityCard: {
     backgroundColor: '#fff',
@@ -159,15 +251,15 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
-  timeStamp: {
-    color: '#fff',
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'center',
-  },
   activityTime: {
     color: '#666',
     fontSize: 12,
     marginTop: 2,
+  },
+  backButton: { marginBottom: 10 
+
+  },
+  backText: { fontSize: 16, color: '#007bff' 
+
   },
 });

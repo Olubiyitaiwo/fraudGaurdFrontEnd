@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  Text,
+  Alert,
+  Platform,
+} from 'react-native';
 import axios from 'axios';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+
+const API_URL = 'http://172.16.0.167:8080/api/auth/register';
 
 export default function Signup() {
   const { role } = useLocalSearchParams<{ role: 'agent' | 'user' }>();
@@ -51,18 +61,20 @@ export default function Signup() {
     return true;
   };
 
+  const mapRoleToEnum = (role: string): 'AGENT' | 'REGULAR_USER' => {
+    return role === 'agent' ? 'AGENT' : 'REGULAR_USER';
+  };
+
   const handleSignup = async () => {
     if (!validate()) return;
 
     try {
-      const response = await axios.post('http://192.168.43.16:8080/api/auth/register', {
-      //const response = await axios.post('http://localhost:8080/api/auth/register', {
-
+      const response = await axios.post(API_URL, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
         password: password.trim(),
-        role: currentRole,
+        role: mapRoleToEnum(currentRole),
       });
 
       if (response.status === 201 || response.status === 200) {
@@ -73,7 +85,25 @@ export default function Signup() {
       }
     } catch (error: any) {
       console.log('Signup error:', error);
-      Alert.alert('Signup error', error.response?.data?.message || error.message);
+
+      if (axios.isAxiosError(error)) {
+        const responseData = error.response?.data;
+
+        if (Array.isArray(responseData?.errors)) {
+          Alert.alert('Signup Error', responseData.errors.join('\n'));
+        } else {
+          const message =
+            responseData?.message ||
+            responseData?.error ||
+            JSON.stringify(responseData) ||
+            'Unknown server error';
+          Alert.alert('Signup Error', message);
+        }
+
+        console.warn('Server responded with:', responseData);
+      } else {
+        Alert.alert('Unexpected Error', error.message || 'Something went wrong.');
+      }
     }
   };
 
@@ -125,7 +155,7 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#007bff',
+    backgroundColor: '#C8C7D0',
     justifyContent: 'center',
     padding: 20,
   },
@@ -134,6 +164,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 15,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+      },
+    }),
   },
   title: {
     fontSize: 28,
